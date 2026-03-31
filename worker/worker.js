@@ -1,5 +1,5 @@
 const CLIENT_ID    = 'Ov23liCGewLzRyVLpkEs';
-const FRONTEND_URL = 'https://manuchi.github.io/glossothekk';
+const FRONTEND_URL = 'https://manuchi-nuchi.github.io/glossothekk';
 
 export default {
   async fetch(request, env) {
