@@ -273,9 +273,11 @@ function activate(context) {
 
 	// ── FileSystemWatcher ─────────────────────────────────────────────
 	const debounceTimers = new Map();
+	const userSaving     = new Set(); // files currently being saved by the user in VSCode
 
 	function scheduleRecompute(filePath) {
 		if (!extensionEnabled || isReverting) return;
+		if (userSaving.has(filePath)) return;
 		const t = debounceTimers.get(filePath);
 		if (t) clearTimeout(t);
 		debounceTimers.set(filePath, setTimeout(() => {
@@ -304,12 +306,22 @@ function activate(context) {
 		scheduleRecompute(fp);
 	});
 
-	// When the user saves inside VSCode, advance the snapshot so their own
-	// edits are never shown as diffs — only external writes (e.g. Claude) are.
+	// When the user saves in VSCode: cancel any pending watcher recompute,
+	// advance the snapshot, and clear diffs so their own edits never show up.
 	context.subscriptions.push(
+		vscode.workspace.onWillSaveTextDocument(e => {
+			if (!extensionEnabled) return;
+			userSaving.add(e.document.uri.fsPath);
+		}),
 		vscode.workspace.onDidSaveTextDocument(doc => {
 			if (!extensionEnabled) return;
 			const fp = doc.uri.fsPath;
+			// Cancel any watcher-triggered recompute queued for this file
+			const t = debounceTimers.get(fp);
+			if (t) { clearTimeout(t); debounceTimers.delete(fp); }
+			// Keep userSaving set for a tick so the watcher event (which may
+			// arrive after this handler) still gets ignored
+			setTimeout(() => userSaving.delete(fp), 500);
 			snapshots.set(fp, doc.getText());
 			recompute(fp, doc.getText());
 			decoProvider.fire(doc.uri);

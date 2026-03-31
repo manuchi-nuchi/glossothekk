@@ -30,7 +30,23 @@ function showProfile(user) {
   el.querySelector('.username').textContent = `@${user.login}`;
 }
 
+function applyRandomBg() {
+  const hue1 = Math.floor(Math.random() * 360);
+  const hue2 = Math.floor(Math.random() * 360);
+  document.body.style.background = `
+    linear-gradient(
+      100deg,
+      hsla(${hue1}, 70%, 45%, 0.10) 0%,
+      transparent 20%,
+      transparent 80%,
+      hsla(${hue2}, 70%, 45%, 0.10) 100%
+    ),
+    #0d1117
+  `;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  applyRandomBg();
   document.getElementById('btn-login').addEventListener('click', login);
   document.getElementById('btn-logout').addEventListener('click', logout);
 
